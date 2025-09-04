@@ -10,6 +10,19 @@ const path = require("path");
 // 	return `LazyDocs says: Generating docs for ${name}`
 // }
 
+//The getTitle function that checks the current working directory and search for a package.json to get the project name or fallback to the folder name
+function getTitle(rootPath = process.cwd()) {
+  const packagePath = path.join(rootPath, "package.json");
+  if (fs.existsSync(packagePath)) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(packagePath, "utf-8"));
+      return pkg.name || path.basename(rootPath);
+    } catch {
+      return path.basename(rootPath);
+    }
+  }
+  return path.basename(rootPath);
+}
 function scanRoot(rootPath) {
   const results = [];
 
@@ -80,11 +93,16 @@ function activate(context) {
       }
       const rootPath = folders[0].uri.fsPath;
       const results = scanRoot(rootPath);
-	  const treeFormat = formatTree(results)
+      const treeFormat = formatTree(results);
       const result = results.map((item) => item.name).join("\n");
       const output = vscode.window.createOutputChannel("LazyDocs");
       output.show();
       output.appendLine(treeFormat);
+      const filePath = path.join(rootPath, "LAZYDOCS.md");
+      fs.appendFileSync(
+        filePath,
+        `# Project Name \n## File Structure \n${treeFormat}`
+      );
       console.log("scan results: ", treeFormat);
       vscode.window.showInformationMessage(`scan results: ${result}`);
     }
