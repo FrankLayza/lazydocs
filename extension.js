@@ -82,33 +82,34 @@ function activate(context) {
       // );
       // console.log("scan results: ", treeFormat);
       // vscode.window.showInformationMessage(`scan results: ${result}`);
-
-      const title = await getTitle();
-      const overview = await getOverview();
-      const structure = await getStructure();
-      const boilerPlate = await getBoilerPlate();
-      const techStack = await getTechStack();
-
-      const content = `# ${title}
-
-## Overview  
-${overview}
-
-## Tech Stack  
-${techStack}
-
-## Boilerplate  
-${boilerPlate}
-
-## Project Structure  
-${structure}
-`;
       const folders = vscode.workspace.workspaceFolders;
       if (!folders) {
         vscode.window.showErrorMessage("No workspace folder is open");
         return;
       }
       const rootPath = folders[0].uri.fsPath;
+
+      const title = await getTitle(rootPath);
+      const overview = await getOverview(rootPath);
+      const structure = await getStructure(rootPath);
+      const boilerPlate = await getBoilerPlate();
+      const techStack = await getTechStack(rootPath);
+
+      const content = `# ${title}
+
+
+${overview}
+
+  
+${techStack}
+
+  
+${boilerPlate}
+
+
+${structure}
+`;
+
       updateDocs(content, rootPath);
       vscode.window.showInformationMessage("LazyDocs: LAZYDOCS updated!");
     }
