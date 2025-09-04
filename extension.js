@@ -3,26 +3,12 @@
 const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-
-// function generateDocsMessage(name){
-// 	return `LazyDocs says: Generating docs for ${name}`
-// }
 
 //The getTitle function that checks the current working directory and search for a package.json to get the project name or fallback to the folder name
-function getTitle(rootPath = process.cwd()) {
-  const packagePath = path.join(rootPath, "package.json");
-  if (fs.existsSync(packagePath)) {
-    try {
-      const pkg = JSON.parse(fs.readFileSync(packagePath, "utf-8"));
-      return pkg.name || path.basename(rootPath);
-    } catch {
-      return path.basename(rootPath);
-    }
-  }
-  return path.basename(rootPath);
-}
+
+
+
+//the scanROOT function to get a structure of the CWD
 function scanRoot(rootPath) {
   const results = [];
 
@@ -65,24 +51,11 @@ function formatTree(results, depth = 0) {
  * @param {vscode.ExtensionContext} context
  */
 
-//this is the default hello world function
 function activate(context) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   console.log('Congratulations, your extension "lazydocs" is now active!');
 
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with  registerCommand
-  // The commandId parameter must match the command field in package.json
-  const disposable = vscode.commands.registerCommand(
-    "lazydocs.helloWorld",
-    function () {
-      // The code you place here will be executed every time your command is executed
-
-      // Display a message box to the user
-      vscode.window.showInformationMessage("Hello World from LazyDocs!");
-    }
-  );
   const disposable2 = vscode.commands.registerCommand(
     "lazydocs.generateDocs",
     async function () {
@@ -108,7 +81,7 @@ function activate(context) {
     }
   );
 
-  context.subscriptions.push(disposable, disposable2);
+  context.subscriptions.push(disposable2);
 }
 
 // This method is called when your extension is deactivated

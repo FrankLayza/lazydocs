@@ -12,14 +12,12 @@
   "activationEvents": [],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "lazydocs.helloWorld",
-      "title": "Hello World"
-    },
-  {
-    "command": "lazydocs.generateDocs",
-    "title": "LazyDocs generateDocs"
-  }]
+    "commands": [
+      {
+        "command": "lazydocs.generateDocs",
+        "title": "LazyDocs generateDocs"
+      }
+    ]
   },
   "scripts": {
     "lint": "eslint .",
