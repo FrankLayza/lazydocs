@@ -21,6 +21,9 @@ const updateDocs = require("./utils/updateDocs");
 // Import utility for commit message generation (calls Hugging Face API)
 const { generateCommitMessage } = require("./utils/commitMessageGenerator");
 
+// Import LLM-based README generator
+const generateReadme = require("./utils/generateReadme");
+
 // Activates the extension when VS Code starts
 function activate(context) {
   console.log("LazyDocs is active!"); // Log activation
@@ -40,17 +43,22 @@ function activate(context) {
       }
       const rootPath = folders[0].uri.fsPath;
 
-      // Build each documentation section
+      // 1. Generate raw doc sections (from utils)
       const title = await getTitle(rootPath);
       const overview = await getOverview(rootPath);
       const structure = await getStructure(rootPath);
       const boilerPlate = await getBoilerPlate();
       const techStack = await getTechStack(rootPath);
 
-      // Combine into markdown and save
-      const content = `# ${title}\n\n${overview}\n\n${techStack}\n\n${boilerPlate}\n\n${structure}`;
-      updateDocs(content, rootPath);
-      vscode.window.showInformationMessage("LAZYDOCS updated!");
+      const rawContent = `# ${title}\n\n${overview}\n\n${techStack}\n\n${boilerPlate}\n\n${structure}`;
+
+      // 2. Call LLM to finesse into README-style docs
+      const finalContent = await generateReadme(rawContent);
+
+      // 3. Write to LAZYDOCS.md instead of README.md
+      updateDocs(finalContent, rootPath);
+
+      vscode.window.showInformationMessage("LAZYDOCS.md updated with polished README content!");
     }
   );
 
