@@ -16,6 +16,10 @@
       {
         "command": "lazydocs.generateDocs",
         "title": "LazyDocs generateDocs"
+      },
+      {
+        "command": "lazydocs.autoGenerateCommit",
+        "title": "LazyDocs: Auto-Generate Commit Message"
       }
     ]
   },
@@ -25,11 +29,14 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.103.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "eslint": "^9.32.0",
+    "@types/vscode": "^1.103.0",
     "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.32.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.2"
   }
 }
