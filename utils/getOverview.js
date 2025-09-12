@@ -1,3 +1,5 @@
+require("dotenv").config( )
+const HF_API_KEY = process.env.HF_API_KEY
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
@@ -106,18 +108,39 @@ async function extraOverview(rootPath) {
 }
 
 async function generateOverviewByLLM(content) {
-  const prompt = `You are a code analysis expert. Below is a sampled representation of a software project, including file names, comments (if any), and snippets from key files (e.g., README, package.json, or code files). Generate a concise summary (150–300 words) of the project's purpose, key components, and technologies used. Focus on the main functionality, structure, and tech stack, avoiding unnecessary details. If the content is limited, make an educated guess based on file names and snippets.
+  const prompt = `You are a code analysis expert. 
+  Below is a sampled representation of a software project, including file names, comments (if any), 
+  and snippets from key files (e.g., README, package.json, or code files). 
+  Generate a concise summary (150–300 words) of the project's purpose, key components, and technologies used. 
+  Focus on the main functionality, structure, and tech stack, avoiding unnecessary details. 
+  If the content is limited, make an educated guess based on file names and snippets.
+  Sampled Project Content:${content}
+  Summary:`;
 
-Sampled Project Content:
-${content}
-
-Summary:`;
-
-try {
-  
-} catch (error) {
-  
-}
+  try {
+    const response = await fetch('https://router.huggingface.co/v1/chat/completions', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${HF_API_KEY}`, // your HF token here
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "deepseek-ai/DeepSeek-R1:novita",
+        messages: [
+          {
+            role: "system",
+            content: prompt
+          },
+        ],
+        max_tokens: 500,
+      })
+    })
+    if(!response.ok){
+      throw new Error(`HF API error: ${response.statusText}`)
+    }
+  } catch (error) {
+    console.error(`Error accessing the LLM`, error.message);
+  }
 }
 
 module.exports = getOverview;
