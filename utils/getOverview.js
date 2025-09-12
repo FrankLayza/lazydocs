@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const axios = require("axios")
 
 //an extractcomment function that retrieves comments from the first 10 lines
 function extractComments(rootPath) {
@@ -47,5 +48,43 @@ function getOverview(rootPath = process.cwd()) {
 
   return `## Overview\n${notes.map((n) => "- " + n).join("\n")}\n`;
 }
+
+async function extraOverview(rootPath){
+  let hasComments = false
+  let projectContents = ''
+
+  function scanProjectDirectory(dir){
+    const projectFiles = fs.readdirSync(dir)
+    for(const file of projectFiles){
+      const fullPath = path.join(dir, file)
+      const fullPathStats = fs.statSync(fullPath)
+      if(fullPathStats.isDirectory()){
+        if(!file.startsWith(".") && file !== "node_modules"){
+          scanProjectDirectory(fullPath)
+        }
+      }else{
+        const content = fs.readFileSync(fullPath, "utf-8")
+        const contentLines = content.split("\n").slice(0, 10)
+        const commentPatterns = [/^\s*\/\/|\/\*|#|<!--|"""/]
+        if(contentLines.some(line => commentPatterns.some(pattern => pattern.test(line)))){
+          hasComments = true
+        }
+        if(path.extname(file).match(/\.(js|ts|jsx|tsx|py|java|c|cpp)$/)){
+          projectContents += `\n\nFile: ${file}\n${content}`
+        }
+      }
+    }
+  }
+  scanProjectDirectory(rootPath)
+
+  if(hasComments){
+    return `This project has some cool comments`
+  }
+  else{
+
+  }
+}
+
+
 
 module.exports = getOverview;

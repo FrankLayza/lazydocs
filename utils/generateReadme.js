@@ -1,4 +1,4 @@
-const fs = require("fs");
+// const fs = require("fs");
 require("dotenv").config();
 const HF_API_KEY = process.env.HF_API_KEY;
 const CHAT_MODEL = "deepseek-ai/DeepSeek-R1:novita";

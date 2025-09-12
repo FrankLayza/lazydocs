@@ -23,7 +23,7 @@ function getTechStack(rootPath = process.cwd()) {
     output += "\n- **Runtime:** Python\n";
     output += "\n- **Dependencies:** " + reqs.join(", ") + "\n";
   } else {
-    output += "No package manager files detected.\n";
+    output += "\nNo package manager files detected.\n";
   }
 
   return output + "\n";
