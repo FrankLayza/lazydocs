@@ -7,12 +7,14 @@ const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 if (!process.env.HF_API_KEY) {
-  vscode.window.showWarningMessage("HF_API_KEY is missing. Commit generation will fail.");
+  vscode.window.showWarningMessage(
+    "HF_API_KEY is missing. Commit generation will fail."
+  );
 }
 
 // Import utilities for documentation generation
 const getTitle = require("./utils/getTitle");
-const getOverview = require("./utils/getOverview");
+const extraOverview = require("./utils/getOverview");
 const getBoilerPlate = require("./utils/getBoilerPlate");
 const getTechStack = require("./utils/getTechStack");
 const getStructure = require("./utils/getStructure");
@@ -22,11 +24,13 @@ const updateDocs = require("./utils/updateDocs");
 const { generateCommitMessage } = require("./utils/commitMessageGenerator");
 
 // Import LLM-based README generator
-const generateReadme = require("./utils/generateReadme");
+// const generateReadme = require("./utils/generateReadme");
 
 // Activates the extension when VS Code starts
 function activate(context) {
-  console.log("LazyDocs is active!"); // Log activation
+  console.log(
+    "Wubba Lubba Dub Docs! LAZYDOCS just activated across the multiverse."
+  ); // Log activation
 
   /**
    * Command: Generate project documentation
@@ -45,7 +49,7 @@ function activate(context) {
 
       // 1. Generate raw doc sections (from utils)
       const title = await getTitle(rootPath);
-      const overview = await getOverview(rootPath);
+      const overview = await extraOverview(rootPath);
       const structure = await getStructure(rootPath);
       const boilerPlate = await getBoilerPlate();
       const techStack = await getTechStack(rootPath);
@@ -53,12 +57,10 @@ function activate(context) {
       const rawContent = `# ${title}\n\n${overview}\n\n${techStack}\n\n${boilerPlate}\n\n${structure}`;
 
       // 2. Call LLM to finesse into README-style docs
-      const finalContent = await generateReadme(rawContent);
+      // const finalContent = await generateReadme(rawContent);
 
       // 3. Write to LAZYDOCS.md instead of README.md
-      updateDocs(finalContent, rootPath);
-
-      vscode.window.showInformationMessage("LAZYDOCS.md updated with polished README content!");
+      updateDocs(rawContent, rootPath);
     }
   );
 
@@ -74,7 +76,8 @@ function activate(context) {
     async () => {
       try {
         // Access VS Code Git extension API
-        const gitExtension = vscode.extensions.getExtension("vscode.git")?.exports;
+        const gitExtension =
+          vscode.extensions.getExtension("vscode.git")?.exports;
         if (!gitExtension) {
           vscode.window.showErrorMessage("Git extension not found.");
           return;
@@ -89,7 +92,9 @@ function activate(context) {
         // Check for staged changes before proceeding
         const stagedChanges = repository.state.indexChanges;
         if (!stagedChanges.length) {
-          vscode.window.showInformationMessage("No staged changes found. Stage files with 'git add'.");
+          vscode.window.showInformationMessage(
+            "No staged changes found. Stage files with 'git add'."
+          );
           return;
         }
 
