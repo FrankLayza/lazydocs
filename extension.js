@@ -6,11 +6,11 @@ const { execSync } = require("child_process");
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
-if (!process.env.HF_API_KEY) {
-  vscode.window.showWarningMessage(
-    "HF_API_KEY is missing. Commit generation will fail."
-  );
-}
+// if (!process.env.HF_API_KEY) {
+//   vscode.window.showWarningMessage(
+//     "HF_API_KEY is missing. Commit generation will fail."
+//   );
+// }
 
 // Import utilities for documentation generation
 const getTitle = require("./utils/getTitle");
