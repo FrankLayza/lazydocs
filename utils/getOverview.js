@@ -4,6 +4,8 @@ const fs = require("fs");
 const path = require("path");
 const vscode = require("vscode");
 
+const URL = "https://lazydocs.vercel.app/api/v1/summary" 
+
 // scans project and builds prompt string
 function collectProjectContent(rootPath) {
   let projectContents = "";
@@ -54,7 +56,7 @@ function collectProjectContent(rootPath) {
 // call HF LLM API
 async function generateOverviewByLLM(projectContents) {
   // Call backend API instead of Hugging Face directly
-  const response = await fetch("http://localhost:4500/api/v1/summary", {
+  const response = await fetch(URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
