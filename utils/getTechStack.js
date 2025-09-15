@@ -12,11 +12,11 @@ function getTechStack(rootPath = process.cwd()) {
     output += "\n- **Runtime:** Node.js\n";
     if (pkg.dependencies) {
       output +=
-        "- **Dependencies:** " + Object.keys(pkg.dependencies).join("\n");
+        "- **Dependencies:** \n" + Object.keys(pkg.dependencies).join("\n");
     }
     if (pkg.dependencies) {
       output +=
-        "\n- **Dev Tools:** " + Object.keys(pkg.dependencies).join("\n");
+        "\n- **Dev Tools:** \n" + Object.keys(pkg.dependencies).join("\n");
     }
   } else if (fs.existsSync(reqPath)) {
     const reqs = fs.readFileSync(reqPath, "utf-8").split("\n").filter(Boolean);
