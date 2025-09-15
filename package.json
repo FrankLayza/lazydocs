@@ -1,7 +1,7 @@
 {
   "name": "lazydocs",
   "displayName": "LazyDocs",
-  "publisher": "FrankLayza",
+  "publisher": "Fazer",
   "description": "automatically generates a readme for your project, so that you don't have to, seriously, writing docs can be stressful",
   "galleryBanner.color": {
     "color": "#2D68FF",
