@@ -1,5 +1,5 @@
 require("dotenv").config();
-const HF_API_KEY = process.env.HF_API_KEY;
+// const HF_API_KEY = process.env.HF_API_KEY;
 const fs = require("fs");
 const path = require("path");
 const vscode = require("vscode");
@@ -53,37 +53,19 @@ function collectProjectContent(rootPath) {
 
 // call HF LLM API
 async function generateOverviewByLLM(projectContents) {
-  const prompt = `
-Based on the following directory structure:
-${projectContents}
-
-Generate a single paragraph (100-150 words) summarizing the project's purpose, 
-key technologies, and main features. 
-Return only the summary paragraph, without any analysis, 
-thought process, or tags like <think>. Do not include extra text or headings.
-`;
-
-  const response = await fetch(
-    "https://router.huggingface.co/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${HF_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "deepseek-ai/DeepSeek-R1:novita",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 500,
-      }),
-    }
-  );
-  if (!HF_API_KEY)
-    throw new Error(`Morty! We can’t do AI stuff without the API key, Morty!`);
-  if (!response.ok) throw new Error(`HF API error: ${response.statusText}`);
+  // Call backend API instead of Hugging Face directly
+  const response = await fetch("http://localhost:4500/api/v1/summary", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ content: projectContents }),
+  });
+  if (!response.ok)
+    throw new Error(`Backend API error: ${response.statusText}`);
   const data = await response.json();
-  const raw = data.choices[0].message.content.trim();
-  return extractSingleParagraph(raw);
+  // Expect { summary } in response
+  return extractSingleParagraph(data?.summary || "");
 }
 
 function extractSingleParagraph(text) {
