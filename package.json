@@ -4,8 +4,12 @@
   "publisher": "FrankLayza",
   "description": "automatically generates a readme for your project, so that you don't have to, seriously, writing docs can be stressful",
   "galleryBanner.color": {
-    "color" :"#2D68FF",
+    "color": "#2D68FF",
     "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FrankLayza/lazydocs"
   },
   "version": "0.0.1",
   "icon": "./assets/rickLD.png",
