@@ -13,9 +13,6 @@ app.use(cors());
 // Disable X-Powered-By header for security
 app.disable("x-powered-by");
 
-// Optionally use Helmet for additional security headers
-// import helmet from "helmet";
-// app.use(helmet());
 
 app.use("/api/v1", mortyRoutes);
 app.listen(PORT, () => {
