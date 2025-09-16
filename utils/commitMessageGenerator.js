@@ -35,7 +35,11 @@ async function generateCommitMessageWithProgress(message) {
         progress.report({ message: "Processing response..." });
         await new Promise((r) => setTimeout(r, 500)); // optional small delay for UX
 
-        const commitMsg = extractCommitMessage(data?.result || data);
+        let rawMsg = data?.commitResult || data;
+        if (typeof rawMsg !== "string") {
+          rawMsg = JSON.stringify(rawMsg);
+        }
+        const commitMsg = extractCommitMessage(rawMsg);
         vscode.window.showInformationMessage(
           `Commit message generated: "${commitMsg}"`
         );

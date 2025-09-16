@@ -21,7 +21,9 @@ const getStructure = require("./utils/getStructure");
 const updateDocs = require("./utils/updateDocs");
 
 // Import utility for commit message generation (calls Hugging Face API)
-const { generateCommitMessage } = require("./utils/commitMessageGenerator");
+const {
+  generateCommitMessageWithProgress,
+} = require("./utils/commitMessageGenerator");
 
 // Import LLM-based README generator
 // const generateReadme = require("./utils/generateReadme");
@@ -116,7 +118,9 @@ function activate(context) {
         }
 
         // Call Hugging Face API to generate commit message
-        const commitMessage = await generateCommitMessage(diffOutput);
+        const commitMessage = await generateCommitMessageWithProgress(
+          diffOutput
+        );
 
         // Insert generated commit message into Git commit box
         repository.inputBox.value = commitMessage;
