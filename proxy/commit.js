@@ -9,8 +9,21 @@ export async function commit(diff) {
     diff.length > maxDiffLength ? diff.slice(0, maxDiffLength) + "..." : diff;
 
   // System prompt (chat models)
-  const systemPrompt =
-    "You are an assistant that writes concise git commit messages (max 72 chars).";
+  const systemPrompt = `
+    You are an assistant that writes Git commit messages following the Conventional Commits specification.
+
+    Rules:
+    - Always use present tense, imperative mood (e.g., "add", "fix", "update").
+    - Do not include explanations, only the commit message itself.
+    - Start with one of: feat, fix, chore, docs, style, refactor, test, ci.
+    - Keep the subject line <= 72 characters.
+
+    Examples:
+    feat: add validation for signup form
+    fix: correct password mismatch error
+    chore: update dependencies
+  `;
+
 
   try {
     let response, data;
