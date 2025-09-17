@@ -4,90 +4,108 @@ const { parse } = require("@babel/parser");
 const traverse = require("@babel/traverse").default;
 
 module.exports = function testBabel(dir) {
-  const results = []; // Store results for debugging
+  const results = [];
   const folders = fs.readdirSync(dir);
+
+  // Clear test.md at the start
+  const testPage = path.join(dir, "test.md");
+  try {
+    fs.writeFileSync(testPage, "", "utf-8");
+  } catch (error) {
+    console.error(`Error clearing ${testPage}: ${error.message}`);
+  }
 
   for (const folder of folders) {
     const fullPath = path.join(dir, folder);
     const stat = fs.statSync(fullPath);
 
     if (stat.isDirectory()) {
-      // Skip node_modules
       if (folder !== "node_modules") {
-        results.push(...testBabel(fullPath)); // Recursive call, collect results
+        results.push(...testBabel(fullPath));
       }
     } else if (path.extname(fullPath).match(/\.js$/)) {
       try {
-        // Read .js file
         const source = fs.readFileSync(fullPath, "utf-8");
-        // Parse with unambiguous module type
         const ast = parse(source, { sourceType: "unambiguous" });
-
-        // Define test.md in the same directory as the .js file
-        const testPage = path.join(path.dirname(fullPath), "test.md");
-        const fullResults = {
-          functions: [],
+        const fileResults = {
           imports: [],
+          functions: [],
           members: [],
-        }; 
+        };
 
         traverse(ast, {
           ImportDeclaration(path) {
-            fullResults.imports.push(path.node.source.value);
-            console.log(`import: ${path.node.source.value}`);
+            const importResult = `import: ${path.node.source.value}`;
+            fileResults.imports.push(importResult);
+            console.log(importResult);
+          },
+          CallExpression(path) {
+            if (path.node.callee.name === "require" && path.node.arguments[0]?.type === "StringLiteral") {
+              const importResult = `require: ${path.node.arguments[0].value}`;
+              fileResults.imports.push(importResult);
+              console.log(importResult);
+            }
+          },
+          VariableDeclarator(path) {
+            if (
+              path.node.init?.type === "CallExpression" &&
+              path.node.init.callee.name === "require" &&
+              path.node.id.type === "ObjectPattern"
+            ) {
+              const moduleName = path.node.init.arguments[0].value;
+              const properties = path.node.id.properties.map(prop => prop.key.name);
+              properties.forEach(prop => {
+                const importResult = `require: ${moduleName}.${prop}`;
+                fileResults.imports.push(importResult);
+                console.log(importResult);
+              });
+            }
           },
           FunctionDeclaration(path) {
-            fullResults.functions.push(path.node.id.name);
-            console.log(`function: ${path.node.id.name}`);
+            const functionResult = `function: ${path.node.id?.name || "anonymous"}`;
+            fileResults.functions.push(functionResult);
+            console.log(functionResult);
           },
           MemberExpression(path) {
-            const obj = path.node.object.name || "unknown";
-            const prop = path.node.property.name || "unknown";
-            const result = `member: ${obj}.${prop}`;
-            fullResults.members.push(result); // Collect for writing
-          },
-          CallExpression(path){
-            if(path.node.callee.name == "require" && path.node.arguments[0]?.type == "StringLiteral"){
-              const importResult = `require: ${path.node.arguments[0]?.value}`
-              fullResults.imports.push(importResult)
+            function getMemberExpressionString(node) {
+              if (node.type === "MemberExpression") {
+                const obj = getMemberExpressionString(node.object) || node.object.name || node.object.type;
+                const prop = node.property.name || (node.computed && node.property.value) || node.property.type || "unknown";
+                return `${obj}.${prop}`;
+              }
+              return node.name || node.type || "unknown";
             }
-          }
+            const memberResult = `member: ${getMemberExpressionString(path.node)}`;
+            fileResults.members.push(memberResult);
+            console.log(memberResult);
+          },
         });
 
-        if (
-          fullResults.functions.length > 0 ||
-          fullResults.imports.length > 0 ||
-          fullResults.members.length > 0
-        ) {
+        if (fileResults.imports.length > 0 || 
+            fileResults.functions.length > 0 || 
+            fileResults.members.length > 0) {
           try {
             const markdownContent = [
               `# Analysis of ${path.basename(fullPath)}`,
               "## Imports",
-              fullResults.imports.length > 0
-                ? fullResults.imports.join("\n")
-                : "None",
+              fileResults.imports.length > 0 ? fileResults.imports.join("\n") : "None",
               "## Functions",
-              fullResults.functions.length > 0
-                ? fullResults.functions.join("\n")
-                : "None",
+              fileResults.functions.length > 0 ? fileResults.functions.join("\n") : "None",
               "## Member Expressions",
-              fullResults.members.length > 0
-                ? fullResults.members.join("\n")
-                : "None",
-              "", // Extra newline for readability
+              fileResults.members.length > 0 ? fileResults.members.join("\n") : "None",
+              "", // Extra newline
             ].join("\n");
+
             fs.appendFileSync(testPage, markdownContent, "utf-8");
-            results.push({
-              file: fullPath,
-              testPage,
-              members: fullResults.members,
-              function: fullResults.functions,
-              import: fullResults.imports,
+            results.push({ 
+              file: fullPath, 
+              testPage, 
+              imports: fileResults.imports,
+              functions: fileResults.functions,
+              members: fileResults.members 
             });
           } catch (writeError) {
-            console.error(
-              `Error writing to ${testPage}: ${writeError.message}`
-            );
+            console.error(`Error writing to ${testPage}: ${writeError.message}`);
           }
         }
       } catch (error) {
@@ -96,5 +114,5 @@ module.exports = function testBabel(dir) {
     }
   }
 
-  return results; // Return results for debugging
+  return results;
 };
