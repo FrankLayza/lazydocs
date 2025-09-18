@@ -1,7 +1,10 @@
-const testBabel = require("./babelTest")
+const path = require("path");
+const testBabel = require("./babelTest");
 
-// updated the code to an asynchronous function
 (async () => {
-  const results = await testBabel("../utils");
+  const targetDir = path.join(__dirname, "../utils");
+  const results = await testBabel(targetDir);
+
+  console.log("Analysis complete");
   console.log(results);
 })();

@@ -9,7 +9,9 @@
 // module.exports = {getWebFeatures}
 
 
-(async () => {
+async function getWebFeatures(featureId) {
   const { features } = await import("web-features");
-  console.log(features.fetch.status.baseline);
-})();
+  return features[featureId]?.status.baseline;
+}
+
+module.exports = { getWebFeatures };

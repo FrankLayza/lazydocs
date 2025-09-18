@@ -7,6 +7,8 @@ require: @babel/parser
 require: @babel/traverse
 require: ./getWebFeature.getWebFeatures
 require: ./getWebFeature
+require: ./data/featureMappings.featureMappings
+require: ./data/featureMappings
 ## Functions
 function: testBabel
 function: getMemberExpressionString
@@ -91,7 +93,11 @@ member: path.node
 member: fileResults.members.push
 member: fileResults.members
 member: console.log
-member: fileResults.functions
+member: featureMappings.memberStr
+member: fileResults.mappedFeatures.push
+member: fileResults.mappedFeatures
+member: featureMappings.memberStr
+member: fileResults.mappedFeatures
 member: console.log
 member: results.push
 member: fileResults.imports.length
@@ -114,16 +120,23 @@ member: fileResults.members.length
 member: fileResults.members
 member: fileResults.members.join
 member: fileResults.members
+member: fileResults.mappedFeatures.length
+member: fileResults.mappedFeatures
+member: fileResults.mappedFeatures.join
+member: fileResults.mappedFeatures
 member: fs.appendFileSync
 member: results.push
 member: fileResults.imports
 member: fileResults.functions
 member: fileResults.members
+member: fileResults.mappedFeatures
 member: console.error
 member: writeError.message
 member: console.error
 member: error.message
 member: module.exports
+## Mapped Web Features
+None
 # Analysis of commitMessageGenerator.js
 ## Imports
 require: dotenv
@@ -152,6 +165,8 @@ member: vscode.window.showErrorMessage
 member: vscode.window
 member: error.message
 member: module.exports
+## Mapped Web Features
+None
 # Analysis of generateReadme.js
 ## Imports
 require: dotenv
@@ -177,6 +192,8 @@ member: CallExpression.then
 member: console.log
 member: console.error
 member: module.exports
+## Mapped Web Features
+None
 # Analysis of getBoilerPlate.js
 ## Imports
 None
@@ -184,6 +201,8 @@ None
 function: getBoilerPlate
 ## Member Expressions
 member: module.exports
+## Mapped Web Features
+None
 # Analysis of getOverview.js
 ## Imports
 require: dotenv
@@ -240,6 +259,8 @@ member: vscode.ProgressLocation
 member: vscode.window.showInformationMessage
 member: vscode.window
 member: module.exports
+## Mapped Web Features
+None
 # Analysis of getStructure.js
 ## Imports
 require: fs
@@ -260,6 +281,8 @@ member: process.cwd
 member: path.join
 member: fs.existsSync
 member: module.exports
+## Mapped Web Features
+None
 # Analysis of getTechStack.js
 ## Imports
 require: fs
@@ -287,6 +310,8 @@ member: CallExpression.split
 member: fs.readFileSync
 member: reqs.join
 member: module.exports
+## Mapped Web Features
+None
 # Analysis of getTitle.js
 ## Imports
 require: fs
@@ -304,6 +329,8 @@ member: path.basename
 member: path.basename
 member: path.basename
 member: module.exports
+## Mapped Web Features
+None
 # Analysis of getWebFeature.js
 ## Imports
 None
@@ -312,13 +339,20 @@ function: getWebFeatures
 ## Member Expressions
 member: features.featureId
 member: module.exports
+## Mapped Web Features
+None
 # Analysis of run.js
 ## Imports
+require: path
 require: ./babelTest
 ## Functions
 None
 ## Member Expressions
+member: path.join
 member: console.log
+member: console.log
+## Mapped Web Features
+None
 # Analysis of test.js
 ## Imports
 None
@@ -331,12 +365,7 @@ member: console.log
 member: obj.y
 member: console.log
 member: arr.length
-# Analysis of test2.js
-## Imports
-import: node-fetch
-## Functions
-function: test
-## Member Expressions
+## Mapped Web Features
 None
 # Analysis of updateDocs.js
 ## Imports
@@ -355,3 +384,5 @@ member: existing.replace
 member: fs.writeFileSync
 member: fs.writeFileSync
 member: module.exports
+## Mapped Web Features
+None
