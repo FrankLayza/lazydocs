@@ -331,6 +331,13 @@ member: console.log
 member: obj.y
 member: console.log
 member: arr.length
+# Analysis of test2.js
+## Imports
+import: node-fetch
+## Functions
+function: test
+## Member Expressions
+None
 # Analysis of updateDocs.js
 ## Imports
 require: fs

@@ -1,3 +1,7 @@
 const testBabel = require("./babelTest")
-const results = testBabel("../utils")
-console.log(results)
+
+// updated the code to an asynchronous function
+(async () => {
+  const results = await testBabel("../utils");
+  console.log(results);
+})();
