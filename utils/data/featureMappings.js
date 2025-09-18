@@ -1,52 +1,54 @@
+// Auto-generated mapping (do not edit manually)
 const featureMappings = {
-  // Network APIs
+  "Array.prototype.at": "array-at",
+  "Array.prototype.by-copy": "array-by-copy",
+  "Array.prototype.copywithin": "array-copywithin",
+  "Array.prototype.fill": "array-fill",
+  "Array.prototype.find": "array-find",
+  "Array.prototype.findlast": "array-findlast",
+  "Array.prototype.flat": "array-flat",
+  "Array.prototype.from": "array-from",
+  "Array.prototype.fromasync": "array-fromasync",
+  "Array.prototype.group": "array-group",
+  "Array.prototype.includes": "array-includes",
+  "Array.prototype.isarray": "array-isarray",
+  "Array.prototype.iteration-methods": "array-iteration-methods",
+  "Array.prototype.iterators": "array-iterators",
+  "Array.prototype.of": "array-of",
+  "Array.prototype.splice": "array-splice",
+  "Date.get-year-set-year": "date-get-year-set-year",
+  "Date.to-gmt-string": "date-to-gmt-string",
+  "Intl": "intl",
+  "Math.sum-precise": "math-sum-precise",
+  "Object.fit": "object-fit",
+  "Object.hasown": "object-hasown",
+  "Object.object": "object-object",
+  "Object.position": "object-position",
+  "Object.view-box": "object-view-box",
+  "String.prototype.at": "string-at",
+  "String.prototype.codepoint": "string-codepoint",
+  "String.prototype.includes": "string-includes",
+  "String.prototype.matchall": "string-matchall",
+  "String.prototype.normalize": "string-normalize",
+  "String.prototype.pad": "string-pad",
+  "String.prototype.raw": "string-raw",
+  "String.prototype.repeat": "string-repeat",
+  "String.prototype.replaceall": "string-replaceall",
+  "String.prototype.startsends-with": "string-startsends-with",
+  "String.prototype.trim-startend": "string-trim-startend",
+  "String.prototype.wellformed": "string-wellformed",
+  "URL": "url",
   "fetch": "fetch",
   "XMLHttpRequest": "xhr",
   "WebSocket": "websockets",
   "EventSource": "eventsource",
   "navigator.serviceWorker": "service-workers",
-
-  // Storage APIs
   "localStorage": "storage",
   "sessionStorage": "storage",
   "indexedDB": "indexeddb",
   "caches": "cache-api",
-
-  // Promises & Async
   "Promise": "promises",
   "async": "async-functions",
-  "await": "async-functions",
-
-  // Arrays & Iterables
-  "Array.prototype.find": "array-find",
-  "Array.prototype.includes": "array-includes",
-  "Array.prototype.flat": "array-flat",
-  "Array.prototype.at": "array-at",
-  "Array.from": "array-from",
-
-  // Strings
-  "String.prototype.includes": "string-includes",
-  "String.prototype.replaceAll": "string-replaceall",
-  "String.prototype.matchAll": "string-matchall",
-  "String.prototype.padStart": "string-padstart-end",
-
-  // Objects
-  "Object.entries": "object-entries",
-  "Object.values": "object-values",
-  "Object.fromEntries": "object-fromentries",
-  "Object.hasOwn": "object-hasown",
-
-  // Numbers
-  "Number.isNaN": "number-isinan",
-  "Number.parseInt": "number-parseint",
-  "Math.sign": "math-sign",
-  "Math.trunc": "math-trunc",
-
-  // Others
-  "URL": "url",
-  "URLSearchParams": "urlsearchparams",
-  "Intl": "intl",
-  "Intl.DateTimeFormat": "intl-datetimeformat",
-  "Intl.NumberFormat": "intl-numberformat",
+  "await": "async-functions"
 };
 module.exports = { featureMappings };
