@@ -7,6 +7,7 @@ const overrides = {
   WebSocket: "websockets",
   EventSource: "eventsource",
   "navigator.serviceWorker": "service-workers",
+  "document.querySelector": "querySelector",
 
   localStorage: "storage",
   sessionStorage: "storage",

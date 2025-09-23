@@ -113,13 +113,16 @@ async function testBabel(dir, writeHeader = true) {
             }
           } else if (path.node.callee.type === "MemberExpression") {
             // e.g., Array.prototype.includes, Promise.all, navigator.serviceWorker.register
-            const object = path.node.callee.object.name ||
+            const object =
+              path.node.callee.object.name ||
               (path.node.callee.object.type === "MemberExpression"
                 ? getMemberExpressionString(path.node.callee.object)
                 : undefined);
             const property = path.node.callee.property.name;
             // Try both prototype and direct member mapping
-            const syntaxProto = object ? `${object}.prototype.${property}` : undefined;
+            const syntaxProto = object
+              ? `${object}.prototype.${property}`
+              : undefined;
             const syntaxDirect = object ? `${object}.${property}` : undefined;
             if (syntaxProto && featureMappings[syntaxProto]) {
               fileResults.mappedFeatures.push({
@@ -196,13 +199,30 @@ async function testBabel(dir, writeHeader = true) {
         }
       }
 
+      function formatBaseline(baseline) {
+        if (baseline === "high") {
+          return `✅ **${baseline}** (Widely available)`;
+        } else if (baseline === "low") {
+          return `⚠️ **${baseline}** (Limited support)`;
+        } else if (baseline === false) {
+          return `❌ **Discouraged** (Non-baseline)`;
+        } else if (baseline === "newly available") {
+          return `🆕 **${baseline}** (Recent addition)`;
+        } else if (baseline === null || baseline === undefined) {
+          return `❓ Not found`;
+        }
+        return baseline; // Fallback for unknown values
+      }
+
       // --- Write results into test.md as a Markdown table row ---
       if (mappedWithBaseline.length > 0) {
         try {
           const rows = mappedWithBaseline
             .map(
               (item) =>
-                `| ${path.basename(fullPath)} | ${item.syntax} | ${item.featureId} | ${item.baseline} |`
+                `| ${path.basename(fullPath)} | ${item.syntax} | ${
+                  item.featureId
+                } | ${formatBaseline(item.baseline)} |`
             )
             .join("\n");
           fs.appendFileSync(testPage, rows + "\n", "utf-8");
