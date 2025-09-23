@@ -196,6 +196,7 @@ async function testBabel(dir, writeHeader = true) {
             featureId,
             baseline: "lookup failed",
           });
+          throw new err
         }
       }
 
