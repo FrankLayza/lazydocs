@@ -117,6 +117,9 @@ function activate(context) {
           diffOutput += `File: ${relativePath}\n${diff}\n`;
         }
 
+        // Clear the Git commit box so it doesn't auto-run
+        repository.inputBox.value = "";
+
         // Call Hugging Face API to generate commit message
         const commitMessage = await generateCommitMessageWithProgress(
           diffOutput
@@ -125,6 +128,16 @@ function activate(context) {
         // Insert generated commit message into Git commit box
         repository.inputBox.value = commitMessage;
         vscode.window.showInformationMessage("Commit message generated!");
+
+        // show in terminal
+        const terminal = vscode.window.createTerminal("LazyDocs");
+        terminal.show();
+
+        // send message to terminal and commit automatically
+        // terminal.sendText(`git commit -m "${commitMessage}"`);
+
+        // send message to terminal and commit manually by hitting the enter button
+        terminal.sendText(`git commit -m "${commitMessage}"`, false);
       } catch (error) {
         // Catch unexpected errors and display to user
         vscode.window.showErrorMessage("Error: " + error.message);
