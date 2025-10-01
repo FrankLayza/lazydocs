@@ -1,17 +1,73 @@
 /* test.css */
+
+/* Layout */
 .container {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
   gap: 20px;
+  place-items: center;
 }
 
+/* Flexbox */
 .item {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
+  flex-direction: row;
+  order: 2;
 }
 
+/* Typography */
 .text {
   color: red;
   font-size: 16px;
+  font-weight: bold;
+  font-style: italic;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  line-height: 1.5;
+}
+
+/* Backgrounds */
+.bg {
+  background-color: blue;
+  background-image: url("image.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Borders */
+.border {
+  border: 1px solid black;
+  border-radius: 8px;
+  border-top: 2px dashed green;
+}
+
+/* Positioning */
+.positioned {
+  position: absolute;
+  top: 10px;
+  left: 20px;
+  z-index: 5;
+}
+
+/* Animations & Transitions */
+.animated {
+  transition: all 0.3s ease-in-out;
+  animation: fadeIn 2s linear infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Media queries */
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
 }
