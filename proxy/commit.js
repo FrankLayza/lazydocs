@@ -47,7 +47,8 @@ export async function commit(diff) {
       );
 
       if (!response.ok) {
-        return "Changes detected, please provide a commit message.";
+        throw new Error(response.statusText)
+        // return "Changes detected, please provide a commit message.";
       }
 
       data = await response.json();

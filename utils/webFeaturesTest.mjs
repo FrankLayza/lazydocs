@@ -7,7 +7,7 @@ if(!fs.existsSync(dir)){
   fs.mkdirSync(dir, {recursive: true})
 }
 
-const feature = Object.keys(features).slice(0,1500)
+const feature = Object.keys(features)
 const fileToCreate = path.join(dir, "feature.md")
 fs.writeFileSync(fileToCreate, feature.join("\n"), "utf-8" )
 

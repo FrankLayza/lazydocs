@@ -1,4 +1,3 @@
-import { config } from "dotenv";
 
 async function getFeatures() {
   const { features } = await import("web-features");
@@ -11,7 +10,7 @@ async function getComputeStatus(a, b) {
 }
 
 // async function getEslint(){
-//     const {config} = await import("../eslint.config.mjs")
+//     const config = await import("../eslint.config.mjs")
 //     return config
 // }
-module.exports = { getFeatures, getComputeStatus, };
+module.exports = { getFeatures, getComputeStatus};

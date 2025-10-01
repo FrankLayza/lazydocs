@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 const { parse } = require("@babel/parser");
 const traverse = require("@babel/traverse").default;
@@ -6,8 +6,9 @@ const { getWebFeatures } = require("./getWebFeature");
 const { featureMappings } = require("./data/featureMappings");
 
 /**
- * Helper to recursively build member expression string
- * e.g., navigator.serviceWorker.register => navigator.serviceWorker.register
+ * Recursively build member expression string (e.g., navigator.serviceWorker.register)
+ * @param {Object} node - AST node
+ * @returns {string} Member expression string
  */
 function getMemberExpressionString(node) {
   if (node.type === "MemberExpression") {
@@ -26,119 +27,118 @@ function getMemberExpressionString(node) {
 }
 
 /**
- * Recursively parse a directory of JS files,
- * extract imports, functions, and member expressions,
- * map them to known web features, and check baseline support.
+ * Recursively parse a directory of JS files, extract all JS syntax,
+ * map to web-features, and check baseline support.
  * Generates a Markdown table for compatibility results.
  *
  * @param {string} dir - Directory to scan
- * @param {boolean} writeHeader - Whether to write the Markdown header (only once)
+ * @param {Object} [options] - Options: { writeHeader: boolean, extensions: string[] }
+ * @returns {Promise<Object[]>} Array of file results
  */
-async function testBabel(dir, writeHeader = true) {
+async function testBabel(
+  dir,
+  options = { writeHeader: true, extensions: [".js", ".jsx", ".mjs"] }
+) {
+  const { writeHeader, extensions } = options;
   const results = [];
-  const folders = fs.readdirSync(dir);
+  const testPage = path.join(__dirname, `test-${Date.now()}.md`); // Unique output file
 
-  // Output file (test.md) where analysis results are appended
-  const testPage = path.join(__dirname, "test.md");
-
-  // Only write header once, at the top-level call
+  // Write header if top-level call
   if (writeHeader) {
     try {
-      fs.writeFileSync(
+      await fs.writeFile(
         testPage,
-        `# Baseline Feature Report\n\n| File | Syntax | Feature ID | Baseline Support |\n|------|--------|------------|-----------------|\n`,
+        `# Baseline Feature Report\n\n| File | Syntax | Feature ID | Baseline Support | Line |\n|------|--------|------------|------------------|------|\n`,
         "utf-8"
       );
     } catch (error) {
-      console.error(`Error clearing ${testPage}: ${error.message}`);
+      console.error(`Error initializing ${testPage}: ${error.message}`);
     }
   }
 
-  for (const folder of folders) {
-    const fullPath = path.join(dir, folder);
-    const stat = fs.statSync(fullPath);
+  let entries;
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch (error) {
+    console.error(`Error reading directory ${dir}: ${error.message}`);
+    return results;
+  }
 
-    // Recursively process subfolders (except node_modules)
-    if (stat.isDirectory()) {
-      if (folder !== "node_modules") {
-        // Don't write header for subfolders
-        results.push(...(await testBabel(fullPath, false)));
-      }
-      continue;
+  // Process files and subdirectories in parallel
+  const tasks = entries.map(async (entry) => {
+    const fullPath = path.join(dir, entry.name);
+
+    // Skip hidden files and node_modules
+    if (entry.name.startsWith(".") || entry.name === "node_modules") return [];
+
+    if (entry.isDirectory()) {
+      return testBabel(fullPath, { ...options, writeHeader: false });
     }
 
-    // Only parse `.js` files
-    if (!path.extname(fullPath).match(/\.js$/)) continue;
+    if (!extensions.includes(path.extname(fullPath).toLowerCase())) return [];
 
     try {
-      const source = fs.readFileSync(fullPath, "utf-8");
-      // Parse JS into AST
-      const ast = parse(source, { sourceType: "unambiguous" });
+      const source = await fs.readFile(fullPath, "utf-8");
+      const ast = parse(source, {
+        sourceType: "unambiguous",
+        plugins: ["jsx"], // Support .jsx files
+      });
 
-      // Collect results for this file
       const fileResults = {
-        imports: [],
-        functions: [],
-        members: [],
-        mappedFeatures: [], // stores {syntax, featureId}
+        imports: new Set(),
+        functions: new Set(),
+        members: new Set(),
+        mappedFeatures: new Set(),
       };
 
-      // Walk through AST and extract features
+      // Traverse AST to extract all JS syntax
       traverse(ast, {
-        // --- Handle ES6 imports ---
         ImportDeclaration(path) {
-          const importResult = `import: ${path.node.source.value}`;
-          fileResults.imports.push(importResult);
+          fileResults.imports.add(`import: ${path.node.source.value}`);
         },
 
-        // --- Handle CommonJS require("module") ---
         CallExpression(path) {
           if (
             path.node.callee.name === "require" &&
             path.node.arguments[0]?.type === "StringLiteral"
           ) {
-            const importResult = `require: ${path.node.arguments[0].value}`;
-            fileResults.imports.push(importResult);
+            fileResults.imports.add(`require: ${path.node.arguments[0].value}`);
           }
 
-          // --- Expanded: Detect direct function calls and member calls ---
-          // e.g., fetch(), Array.prototype.includes(), Promise.all()
           if (path.node.callee.type === "Identifier") {
             const calleeName = path.node.callee.name;
             if (featureMappings[calleeName]) {
-              fileResults.mappedFeatures.push({
+              fileResults.mappedFeatures.add({
                 syntax: calleeName,
                 featureId: featureMappings[calleeName],
+                line: path.node.loc.start.line,
               });
             }
           } else if (path.node.callee.type === "MemberExpression") {
-            // e.g., Array.prototype.includes, Promise.all, navigator.serviceWorker.register
             const object =
               path.node.callee.object.name ||
-              (path.node.callee.object.type === "MemberExpression"
-                ? getMemberExpressionString(path.node.callee.object)
-                : undefined);
+              getMemberExpressionString(path.node.callee.object);
             const property = path.node.callee.property.name;
-            // Try both prototype and direct member mapping
             const syntaxProto = object
               ? `${object}.prototype.${property}`
               : undefined;
             const syntaxDirect = object ? `${object}.${property}` : undefined;
             if (syntaxProto && featureMappings[syntaxProto]) {
-              fileResults.mappedFeatures.push({
+              fileResults.mappedFeatures.add({
                 syntax: syntaxProto,
                 featureId: featureMappings[syntaxProto],
+                line: path.node.loc.start.line,
               });
             } else if (syntaxDirect && featureMappings[syntaxDirect]) {
-              fileResults.mappedFeatures.push({
+              fileResults.mappedFeatures.add({
                 syntax: syntaxDirect,
                 featureId: featureMappings[syntaxDirect],
+                line: path.node.loc.start.line,
               });
             }
           }
         },
 
-        // --- Handle destructured require { x, y } = require("module") ---
         VariableDeclarator(path) {
           if (
             path.node.init?.type === "CallExpression" &&
@@ -146,76 +146,258 @@ async function testBabel(dir, writeHeader = true) {
             path.node.id.type === "ObjectPattern"
           ) {
             const moduleName = path.node.init.arguments[0].value;
-            const properties = path.node.id.properties.map(
-              (prop) => prop.key.name
-            );
-            properties.forEach((prop) => {
-              const importResult = `require: ${moduleName}.${prop}`;
-              fileResults.imports.push(importResult);
+            path.node.id.properties.forEach((prop) => {
+              fileResults.imports.add(
+                `require: ${moduleName}.${prop.key.name}`
+              );
             });
           }
         },
 
-        // --- Handle function declarations ---
         FunctionDeclaration(path) {
-          const functionResult = `function: ${
-            path.node.id?.name || "anonymous"
-          }`;
-          fileResults.functions.push(functionResult);
+          fileResults.functions.add(
+            `function: ${path.node.id?.name || "anonymous"}`
+          );
+          if (path.node.async && featureMappings["FunctionDeclaration:async"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "async function declaration",
+              featureId: featureMappings["FunctionDeclaration:async"],
+              line: path.node.loc.start.line,
+            });
+          }
+          if (
+            path.node.generator &&
+            featureMappings["FunctionDeclaration:generator"]
+          ) {
+            fileResults.mappedFeatures.add({
+              syntax: "generator function declaration",
+              featureId: featureMappings["FunctionDeclaration:generator"],
+              line: path.node.loc.start.line,
+            });
+          }
         },
 
-        // --- Handle member expressions (e.g., window.fetch, navigator.serviceWorker) ---
+        FunctionExpression(path) {
+          if (path.node.async && featureMappings["FunctionExpression:async"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "async function expression",
+              featureId: featureMappings["FunctionExpression:async"],
+              line: path.node.loc.start.line,
+            });
+          }
+          if (
+            path.node.generator &&
+            featureMappings["FunctionExpression:generator"]
+          ) {
+            fileResults.mappedFeatures.add({
+              syntax: "generator function expression",
+              featureId: featureMappings["FunctionExpression:generator"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        ArrowFunctionExpression(path) {
+          if (featureMappings["ArrowFunctionExpression"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "arrow functions",
+              featureId: featureMappings["ArrowFunctionExpression"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        ClassDeclaration(path) {
+          if (featureMappings["ClassDeclaration"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "class declaration",
+              featureId: featureMappings["ClassDeclaration"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        ClassExpression(path) {
+          if (featureMappings["ClassExpression"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "class expression",
+              featureId: featureMappings["ClassExpression"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        AwaitExpression(path) {
+          if (featureMappings["AwaitExpression"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "await expression",
+              featureId: featureMappings["AwaitExpression"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        BigIntLiteral(path) {
+          if (featureMappings["BigIntLiteral"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "BigInt literal",
+              featureId: featureMappings["BigIntLiteral"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        ObjectPattern(path) {
+          if (featureMappings["ObjectPattern"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "object destructuring",
+              featureId: featureMappings["ObjectPattern"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        ArrayPattern(path) {
+          if (featureMappings["ArrayPattern"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "array destructuring",
+              featureId: featureMappings["ArrayPattern"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        YieldExpression(path) {
+          if (featureMappings["YieldExpression"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "yield expression",
+              featureId: featureMappings["YieldExpression"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        ForOfStatement(path) {
+          if (featureMappings["ForOfStatement"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "for...of loop",
+              featureId: featureMappings["ForOfStatement"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        // ForAwaitOfStatement(path) {
+        //   if (featureMappings["ForAwaitOfStatement"]) {
+        //     fileResults.mappedFeatures.add({
+        //       syntax: "for await...of loop",
+        //       featureId: featureMappings["ForAwaitOfStatement"],
+        //       line: path.node.loc.start.line,
+        //     });
+        //   }
+        // },
+
+        SpreadElement(path) {
+          if (featureMappings["SpreadElement"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "spread operator",
+              featureId: featureMappings["SpreadElement"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        TemplateLiteral(path) {
+          if (featureMappings["TemplateLiteral"]) {
+            fileResults.mappedFeatures.add({
+              syntax: "template literals",
+              featureId: featureMappings["TemplateLiteral"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        // ChainExpression(path) {
+        //   if (featureMappings["ChainExpression"]) {
+        //     fileResults.mappedFeatures.add({
+        //       syntax: "optional chaining",
+        //       featureId: featureMappings["ChainExpression"],
+        //       line: path.node.loc.start.line,
+        //     });
+        //   }
+        // },
+
+        LogicalExpression(path) {
+          if (
+            path.node.operator === "??" &&
+            featureMappings["LogicalExpression:??"]
+          ) {
+            fileResults.mappedFeatures.add({
+              syntax: "nullish coalescing",
+              featureId: featureMappings["LogicalExpression:??"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
+        BinaryExpression(path) {
+          if (
+            path.node.operator === "**" &&
+            featureMappings["BinaryExpression:**"]
+          ) {
+            fileResults.mappedFeatures.add({
+              syntax: "exponentiation operator",
+              featureId: featureMappings["BinaryExpression:**"],
+              line: path.node.loc.start.line,
+            });
+          }
+        },
+
         MemberExpression(path) {
           const memberStr = getMemberExpressionString(path.node);
-          const memberResult = `member: ${memberStr}`;
-          fileResults.members.push(memberResult);
-
-          // Check if this member maps to a known web feature id
+          fileResults.members.add(`member: ${memberStr}`);
           if (featureMappings[memberStr]) {
-            fileResults.mappedFeatures.push({
+            fileResults.mappedFeatures.add({
               syntax: memberStr,
               featureId: featureMappings[memberStr],
+              line: path.node.loc.start.line,
             });
           }
         },
       });
 
-      // --- Check mapped features against web-features baseline ---
+      // Check baseline support
       const mappedWithBaseline = [];
-      for (const { syntax, featureId } of fileResults.mappedFeatures) {
+      for (const feature of fileResults.mappedFeatures) {
         try {
-          const baseline = await getWebFeatures(featureId);
+          const baseline = await getWebFeatures(feature.featureId);
           mappedWithBaseline.push({
-            syntax,
-            featureId,
+            ...feature,
             baseline: baseline ?? "not found",
           });
         } catch (err) {
+          console.warn(
+            `Baseline lookup failed for ${feature.featureId}: ${err.message}`
+          );
           mappedWithBaseline.push({
-            syntax,
-            featureId,
+            ...feature,
             baseline: "lookup failed",
           });
-          throw new err
         }
       }
 
+      // Format baseline for Markdown
       function formatBaseline(baseline) {
-        if (baseline === "high") {
-          return `✅ **${baseline}** (Widely available)`;
-        } else if (baseline === "low") {
-          return `⚠️ **${baseline}** (Limited support)`;
-        } else if (baseline === false) {
-          return `❌ **Discouraged** (Non-baseline)`;
-        } else if (baseline === "newly available") {
+        if (baseline === "high") return `✅ **${baseline}** (Widely available)`;
+        if (baseline === "low") return `⚠️ **${baseline}** (Limited support)`;
+        if (baseline === false) return `❌ **${baseline}** (Non-baseline)`;
+        if (baseline === "newly available")
           return `🆕 **${baseline}** (Recent addition)`;
-        } else if (baseline === null || baseline === undefined) {
-          return `❓ Not found`;
-        }
-        return baseline; // Fallback for unknown values
+        if (baseline === null || baseline === undefined) return `❓ Not found`;
+        return `❓ ${baseline}`;
       }
 
-      // --- Write results into test.md as a Markdown table row ---
+      // Write to test.md
       if (mappedWithBaseline.length > 0) {
         try {
           const rows = mappedWithBaseline
@@ -223,29 +405,47 @@ async function testBabel(dir, writeHeader = true) {
               (item) =>
                 `| ${path.basename(fullPath)} | ${item.syntax} | ${
                   item.featureId
-                } | ${formatBaseline(item.baseline)} |`
+                } | ${formatBaseline(item.baseline)} | ${item.line} |`
             )
             .join("\n");
-          fs.appendFileSync(testPage, rows + "\n", "utf-8");
+          await fs.appendFile(testPage, rows + "\n", "utf-8");
         } catch (writeError) {
           console.error(`Error writing to ${testPage}: ${writeError.message}`);
         }
       }
 
-      // Push final structured results into memory
-      results.push({
-        file: fullPath,
-        imports: fileResults.imports,
-        functions: fileResults.functions,
-        members: fileResults.members,
-        mappedFeatures: mappedWithBaseline,
-      });
+      // Summarize file results
+      const summary = `File: ${path.basename(fullPath)}\nDetected ${
+        mappedWithBaseline.length
+      } features: ${
+        mappedWithBaseline.filter((f) => f.baseline === "high").length
+      } high, ${
+        mappedWithBaseline.filter(
+          (f) => f.baseline === "low" || f.baseline === "newly available"
+        ).length
+      } low/newly available, ${
+        mappedWithBaseline.filter((f) => f.baseline === false).length
+      } non-baseline`;
+      console.log(summary);
+
+      return [
+        {
+          file: fullPath,
+          imports: [...fileResults.imports],
+          functions: [...fileResults.functions],
+          members: [...fileResults.members],
+          mappedFeatures: mappedWithBaseline,
+        },
+      ];
     } catch (error) {
       console.error(`Error processing ${fullPath}: ${error.message}`);
+      return [];
     }
-  }
+  });
 
-  return results;
+  // Run tasks in parallel
+  const nestedResults = await Promise.all(tasks);
+  return results.concat(...nestedResults);
 }
 
 module.exports = testBabel;
